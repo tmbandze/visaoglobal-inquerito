@@ -90,10 +90,10 @@ export const TEACHERS: Teacher[] = [
 
   // 5.ª e 6.ª classe: o Alex dá aulas nos dois currículos
   { name: 'Alex Oriente Muxlhanga', subject: { pt: 'Professor · Nacional e Cambridge', en: 'Teacher · National and Cambridge' }, grades: ['5', '6'], curricula: OS_DOIS },
-  { name: 'Fanania Jordao Muvale', subject: titularCambridge, grades: ['5', '6'], curricula: ['cambridge'] },
+  { name: 'Fanania Jordão Muvale', subject: titularCambridge, grades: ['5', '6'], curricula: ['cambridge'] },
 
   // Disciplinas (aparecem a todos os alunos dessas classes)
-  { name: 'Anastancia Chilaule', subject: { pt: 'Francês', en: 'French' }, grades: ['2', '3', '4', '5', '6'], curricula: OS_DOIS },
+  { name: 'Anastácia Chilaule', subject: { pt: 'Francês', en: 'French' }, grades: ['2', '3', '4', '5', '6'], curricula: OS_DOIS },
 ]
 
 // ---------------------------------------------------------------------
