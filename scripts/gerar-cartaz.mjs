@@ -41,7 +41,7 @@ const html = `<!doctype html>
   .brand img { width:74px; }
   .brand b { display:block; font-family:Poppins; font-size:34px; letter-spacing:3px; text-align:left; }
   .brand small { display:block; font-size:19px; opacity:.8; text-align:left; letter-spacing:.5px; }
-  .tag { display:inline-block; margin-top:40px; padding:9px 24px; border-radius:40px; background:var(--orange); font-weight:700; font-size:22px; letter-spacing:1.5px; text-transform:uppercase; position:relative; }
+  .tag { display:inline-block; margin-top:40px; padding:9px 24px; border-radius:40px; background:var(--orange); color:var(--navy); font-weight:700; font-size:22px; letter-spacing:1.5px; text-transform:uppercase; position:relative; }
   h1 { margin-top:18px; font-family:Poppins; font-weight:800; font-size:80px; line-height:1.02; letter-spacing:-1px; position:relative; }
   .sub { margin:18px auto 0; max-width:840px; font-size:28px; line-height:1.4; opacity:.92; position:relative; }
 
