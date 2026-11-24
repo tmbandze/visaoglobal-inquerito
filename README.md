@@ -1,0 +1,156 @@
+# Inquérito aos Encarregados de Educação — Colégio Visão Global
+
+Aplicação web do inquérito de satisfação, acessível por código QR. Custo zero:
+o site fica no **GitHub Pages** e as respostas são gravadas numa **Google Sheet**
+através do **Google Apps Script**.
+
+```
+Telemóvel do encarregado ──► Site (GitHub Pages) ──► Apps Script ──► Google Sheet
+         (código QR)              React + Vite          doPost()       "Respostas" / "Professores"
+```
+
+## Estrutura
+
+| Ficheiro | Para quê |
+|---|---|
+| `src/config/survey.ts` | **O único ficheiro a editar no dia a dia**: perguntas, classes, currículos, professores e o endereço da Google Sheet |
+| `src/i18n.ts` | Textos da interface em português e inglês |
+| `src/App.tsx`, `src/components.tsx` | Ecrãs e componentes (baseados no design do Figma Make) |
+| `src/state.ts` | Respostas, rascunho no telemóvel, validação e envio |
+| `apps-script/Codigo.gs` | Código que recebe as respostas na Google Sheet |
+| `scripts/gerar-qr.mjs` | Gera o código QR para impressão |
+
+## Funcionalidades
+
+- 8 secções: Identificação · Organização · Direção · Administração · Professores · Educação Cristã · Melhorias · Comentários finais
+- Educação Cristã (Estudos Bíblicos): começa por "A sua família é cristã?" (Sim / Não / Prefiro não dizer). Só quem responde Sim vê a avaliação das aulas, o que os pais notaram no educando (Sim, muito / Um pouco / Não notei / Não sei) e os comentários; as outras famílias podem avaliar o respeito pela sua fé e deixar observações (opcional)
+- O encarregado escolhe a **classe** (1.ª à 6.ª) e o currículo: **Bilingue** (Nacional e Cambridge), **Full Cambridge** ou **Nacional**; aparecem só os professores que dão aulas ao educando
+- Português / Inglês em todo o inquérito
+- Validação: as perguntas obrigatórias ficam destacadas e o ecrã desloca-se até elas
+- Rascunho guardado no telemóvel: se o encarregado sair a meio, pode continuar depois
+- Anónimo por defeito; o contacto é opcional e o aviso de privacidade aparece antes
+- Proteção contra fórmulas maliciosas na folha
+
+## 1. Testar no computador
+
+```bash
+npm install
+npm run dev
+```
+
+Abre o endereço indicado (normalmente http://localhost:5173). Enquanto
+`ENDPOINT_URL` estiver vazio, o inquérito funciona em **modo demonstração**:
+nada é enviado e a resposta aparece na consola do navegador.
+
+## 2. Ligar à Google Sheet
+
+> Recomendado: usar uma **conta Google da escola**, para que os dados fiquem com a instituição.
+
+1. Criar uma Google Sheet nova, por exemplo "Inquérito Encarregados 2026".
+2. Menu **Extensões → Apps Script**.
+3. Apagar o conteúdo e colar o ficheiro `apps-script/Codigo.gs`. Guardar.
+4. **Implementar → Nova implementação** → tipo **Aplicação Web**:
+   - Executar como: **Eu**
+   - Quem tem acesso: **Qualquer pessoa**
+5. Autorizar quando o Google pedir e copiar o **URL da aplicação web** (termina em `/exec`).
+   Se aparecer **"O Google não validou esta app"**, é normal: a app é o teu próprio script.
+   Clicar **Avançadas → Aceder a … (não seguro)** e depois **Permitir**.
+6. Colar esse URL em `src/config/survey.ts`:
+   ```ts
+   export const ENDPOINT_URL = 'https://script.google.com/macros/s/XXXX/exec'
+   ```
+7. Para confirmar que está ativo, abrir o URL no navegador: deve aparecer `"ok": true`.
+
+As folhas **Respostas** e **Professores** são criadas sozinhas na primeira resposta.
+Se mais tarde se acrescentarem perguntas, as colunas novas são adicionadas no fim.
+
+> Se alterares o `Codigo.gs`, faz **Implementar → Gerir implementações → Editar → Nova versão**
+> para manter o mesmo URL.
+
+### Painel de resultados
+
+O mesmo `Codigo.gs` cria um menu **Inquérito** na Google Sheet (aparece ao abrir a folha):
+
+- **Atualizar painel**: cria/atualiza o separador **Painel** (cartões com respostas, satisfação
+  média, recomendação e NPS; médias por área e por pergunta; pontos fortes e a melhorar;
+  comparação entre recintos e currículos; melhorias pedidas; quem respondeu; comentários) e o
+  separador **Painel Professores** (confidencial), e o separador **Painel Direção** (confidencial: o detalhe da liderança do Diretor,
+  com temas, comparação com anos anteriores e todos os comentários; no Painel geral a Direção só aparece como média). Também arruma o aspeto das folhas de respostas.
+- **Criar PDF para imprimir**: atualiza os painéis, cria os PDFs em A4 (Painel, Painel Direção e Painel Professores,
+  este último com a folha deitada) na pasta **Relatórios do Inquérito** do Google Drive, ao lado da folha, e mostra
+  os links para os abrir e imprimir. Na primeira vez o Google pede autorização para o script usar o Drive. As colunas estão feitas à medida do A4, por isso a letra
+  sai no tamanho real (pelo menos 10 pt) e as secções que cabem numa página não ficam partidas.
+- **Criar PDF de cada professor**: cria, numa subpasta nova de Relatórios do Inquérito, um PDF por professor com
+  o relatório individual (respeita os filtros do Painel). Demora alguns segundos por professor.
+- **Atualizar automaticamente (de hora a hora)**: liga a atualização automática.
+- **Apagar respostas de teste**: apaga as linhas com `TESTE` na coluna `edicao`.
+- **Apagar TODAS as respostas (recomeçar do zero)**: apaga os separadores Respostas e Professores
+  (são criados de novo na próxima resposta). Usar só para limpar os testes antes de abrir aos pais.
+
+Se apagares linhas à mão, o Painel redesenha-se sozinho, e as avaliações de professores
+de uma resposta apagada deixam de contar.
+
+Os filtros (recinto, currículo, classe, edição) escolhem-se no topo do Painel e valem também para os PDFs.
+No **Painel Professores**, o campo **Professor(a)** no topo mostra a tabela de todos ("Todos") ou o relatório
+individual de um professor: cada pergunta ao lado da média da escola, resultados por turma e os comentários dos pais.
+Para imprimir, usar **Inquérito → Criar PDF para imprimir**. O painel não mostra dados de contacto.
+Não mudar o texto dos cabeçalhos das folhas Respostas e Professores: são usados para gravar.
+
+## 3. Publicar no GitHub Pages
+
+1. Criar um repositório no GitHub (por exemplo `visaoglobal-inquerito`) e enviar esta pasta:
+   ```bash
+   git init
+   git add .
+   git commit -m "Inquérito Colégio Visão Global"
+   git branch -M main
+   git remote add origin https://github.com/UTILIZADOR/visaoglobal-inquerito.git
+   git push -u origin main
+   ```
+2. No repositório: **Settings → Pages → Source: GitHub Actions**.
+3. O ficheiro `.github/workflows/deploy.yml` publica o site automaticamente a cada `git push`.
+   O endereço fica `https://UTILIZADOR.github.io/visaoglobal-inquerito/`.
+
+## 4. Gerar o código QR
+
+```bash
+npm run qr -- https://UTILIZADOR.github.io/visaoglobal-inquerito/
+```
+
+Cria `qr-inquerito.png` (alta resolução, para circulares e cartazes) e `qr-inquerito.svg`.
+
+### Cartaz para o WhatsApp
+
+```bash
+npm run cartaz
+```
+
+Cria `cartaz-inquerito.png` (1620×2025), com o código QR e o link. Os textos estão em `scripts/gerar-cartaz.mjs`.
+
+## 5. Antes de abrir aos pais
+
+- [ ] Perguntas finais aprovadas pelo Conselho (editar `src/config/survey.ts`)
+- [ ] Classes e opções de currículo de cada classe (`GRADES`)
+- [ ] **Nomes reais dos professores** (`TEACHERS`)
+- [ ] `ENDPOINT_URL` preenchido e testado com 2 ou 3 respostas de teste (apagar depois na folha)
+- [ ] `EDICAO` atualizado (ex.: `2026-T4`)
+- [ ] Testar em 2 ou 3 telemóveis diferentes, incluindo um Android simples
+
+### Como funciona a lista de professores
+
+Cada professor tem as classes onde dá aulas (`grades`) e o currículo (`curricula`):
+
+```ts
+{ name: 'Nome Apelido', subject: titularNacional,  grades: ['2'], curricula: ['nacional'] },   // Bilingue e Nacional da 2.ª classe
+{ name: 'Nome Apelido', subject: titularCambridge, grades: ['2'], curricula: ['cambridge'] },  // Bilingue e Full Cambridge da 2.ª classe
+{ name: 'Nome Apelido', subject: { pt: 'Francês', en: 'French' }, grades: TODAS, curricula: OS_DOIS }, // todas as classes
+```
+
+Exemplo, 2.ª classe: Full Cambridge avalia o titular de Cambridge e o de Francês; Nacional avalia o
+titular de Nacional e o de Francês; Bilingue avalia os dois titulares e o de Francês.
+
+## Privacidade
+
+- Não se recolhe nome, email nem telefone, exceto se o encarregado escolher ser contactado.
+- O site não usa cookies nem ferramentas de estatística.
+- O acesso à Google Sheet deve ficar limitado a quem a Direção definir (ver decisões do Conselho).
